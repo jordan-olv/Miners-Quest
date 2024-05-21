@@ -20,6 +20,7 @@ export default function GameScreen() {
   const [bestScore, setBestScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const [blocs, setBlocs] = useState<Bloc[]>([]);
+  const [errorOccurred, setErrorOccurred] = useState(false);
 
   const generateBlocs = (start: number, count: number) => {
     const newBlocs = [];
@@ -46,19 +47,26 @@ export default function GameScreen() {
     }
   };
 
+
   const handlePress = (toolId: number) => {
     if (gameOver) return;
 
     const topBloc = blocs[0];
-    if (toolId === topBloc.toolsId) {
-      setBlocs(blocs.slice(1));
-      setScore(score + 1);
 
-      if(blocs.length < 6) {
-        setBlocs(generateBlocs(0, 6));
-      }
-    } else {
-      console.log("Outil incorrect! Essaie encore.");
+    if (toolId !== topBloc.toolsId) {
+      setErrorOccurred(true); // Indiquer une erreur
+      // Ajouter un délai pour réinitialiser après que Countdown ait pris en compte
+      setTimeout(() => setErrorOccurred(false), 100); // Assure-toi que cela ne déclenche pas trop tôt
+    }
+
+    setBlocs(blocs.slice(1));
+
+    if (blocs.length < 6) {
+      setBlocs(generateBlocs(0, 6));
+    }
+
+    if (toolId === topBloc.toolsId) {
+      setScore(score + 1);
     }
   };
 
@@ -66,9 +74,11 @@ export default function GameScreen() {
     <ImageBackground source={require('../../assets/bg.jpg')} style={styles.backgroundImage}>
       <Stack.Screen options={{ title: 'Game' }} />
       <Container>
-        <Countdown initialCount={10} onEnd={handleGameOver} />
-        <Text>Score: {score}</Text>
-        {gameOver && <Text>Meilleur Score: {bestScore}</Text>}
+        <View style={styles.scoreContainer}>
+          <Text style={styles.scoreText}>Score: {score}</Text>
+          <Countdown initialCount={30} onEnd={handleGameOver} errorOccurred={errorOccurred} />
+          <Text style={styles.bestScoreText}>Meilleur Score: {bestScore}</Text>
+        </View>
         <View style={styles.blocsContainer}>
           {blocs.map((bloc, index) => (
             <View key={index}>
@@ -92,6 +102,12 @@ export default function GameScreen() {
 }
 
 const styles = StyleSheet.create({
+  container: {
+    display: 'flex',
+    alignItems: 'center',
+    width: '100%',
+    marginTop: 30,
+  },
   backgroundImage: {
     flex: 1,
     width: '100%',
@@ -100,7 +116,7 @@ const styles = StyleSheet.create({
   blocsContainer: {
     flexDirection: 'column',
     alignItems: 'center',
-    marginTop: 100,
+    marginTop: 50,
   },
   bloc: {
     padding: 10,
@@ -170,5 +186,24 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 10,
     bottom: 10,
-  }
+  },
+  scoreContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    width: '100%',
+    marginTop: 20,
+  },
+  scoreText: {
+    flex: 1,
+    textAlign: 'left',
+    fontSize: 18,
+    marginLeft: 20,
+  },
+  bestScoreText: {
+    flex: 1,
+    textAlign: 'right',
+    fontSize: 18,
+    marginRight: 20,
+  },
 });
