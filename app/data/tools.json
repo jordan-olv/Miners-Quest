@@ -1,0 +1,22 @@
+[
+  {
+    "id": 1,
+    "name": "Pickaxe",
+    "image": "assets/tools/pickaxe.webp"
+  },
+  {
+    "id": 2,
+    "name": "Axe",
+    "image": "assets/tools/axe.webp"
+  },
+  {
+    "id": 3,
+    "name": "Shovel",
+    "image": "assets/tools/shovel.webp"
+  },
+  {
+    "id": 4,
+    "name": "Hoe",
+    "image": "assets/tools/hoe.webp"
+  }
+]
