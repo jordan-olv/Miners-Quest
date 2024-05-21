@@ -3,7 +3,8 @@ import { Stack } from 'expo-router';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 
 import toolsData from '~/app/data/tools.json';
-import blocsData from '~/app/data/bloc.json';
+import blocsData from '~/app/data/bloc';
+
 
 import { Container } from '~/components/Container';
 import { Countdown } from '~/components/Countdown';
@@ -70,9 +71,7 @@ export default function GameScreen() {
         <View style={styles.blocsContainer}>
           {blocs.map((bloc, index) => (
             <View key={index}>
-              {console.log(bloc.image)}
-              <Image source={{ uri: bloc.image }} style={styles.bloc} />
-              <Text>{bloc.name}</Text>
+              <Image source={bloc.image} style={styles.bloc} />
             </View>
           ))}
         </View>
