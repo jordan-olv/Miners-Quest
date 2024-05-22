@@ -28,8 +28,8 @@ export const Countdown = ({ initialCount, onEnd, errorOccurred }: CountdownProps
   }, [errorOccurred]);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.text}>{count}</Text>
+    <View style={styles.countdownBlock}>
+      <Text style={styles.countdownText}>{count}</Text>
     </View>
   );
 };
@@ -49,5 +49,21 @@ const styles = StyleSheet.create({
     fontSize: 40,
     fontWeight: 'bold',
     textAlign: 'center',
+  },
+  countdownBlock: {
+    width: 110, // Larger width for the countdown
+    height: 110, // Height equal to the width to make a circle
+    borderRadius: 60, // Half of the width and height to create a full circle
+    borderColor: '#FFF',
+    borderWidth: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 150, 0, 0.7)', // Minecraft green color
+    marginTop: 50,
+  },
+  countdownText: {
+    fontSize: 32,
+    color: '#FFF',
+    fontWeight: 'bold',
   },
 });
