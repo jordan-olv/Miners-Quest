@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Stack } from 'expo-router';
-import { View, Text, TouchableOpacity, StyleSheet, Image, ImageBackground } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image, ImageBackground, Animated } from 'react-native';
 
-import toolsData from '~/app/data/tools.json';
+import toolsData from '~/app/data/tools';
 import blocsData from '~/app/data/bloc';
 import { Container } from '~/components/Container';
 import { Countdown } from '~/components/Countdown';
 import { saveScore, getScores } from '../utils/scoreManager';
+
 
 interface Bloc {
   id: number;
@@ -21,6 +22,16 @@ export default function GameScreen() {
   const [gameOver, setGameOver] = useState(false);
   const [blocs, setBlocs] = useState<Bloc[]>([]);
   const [errorOccurred, setErrorOccurred] = useState(false);
+
+  const scoreAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(scoreAnim, {
+      toValue: score,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
+  }, [score]);
 
   const generateBlocs = (start: number, count: number) => {
     const newBlocs = [];
@@ -47,16 +58,14 @@ export default function GameScreen() {
     }
   };
 
-
   const handlePress = (toolId: number) => {
     if (gameOver) return;
 
     const topBloc = blocs[0];
 
     if (toolId !== topBloc.toolsId) {
-      setErrorOccurred(true); // Indiquer une erreur
-      // Ajouter un délai pour réinitialiser après que Countdown ait pris en compte
-      setTimeout(() => setErrorOccurred(false), 100); // Assure-toi que cela ne déclenche pas trop tôt
+      setErrorOccurred(true);
+      setTimeout(() => setErrorOccurred(false), 100);
     }
 
     setBlocs(blocs.slice(1));
@@ -74,11 +83,19 @@ export default function GameScreen() {
     <ImageBackground source={require('../../assets/bg.jpg')} style={styles.backgroundImage}>
       <Stack.Screen options={{ title: 'Game' }} />
       <Container>
-        <View style={styles.scoreContainer}>
-          <Text style={styles.scoreText}>Score: {score}</Text>
-          <Countdown initialCount={30} onEnd={handleGameOver} errorOccurred={errorOccurred} />
-          <Text style={styles.bestScoreText}>Meilleur Score: {bestScore}</Text>
+      <View style={styles.scoreContainer}>
+        <View style={styles.scoreBlock}>
+          <Text style={styles.numberText}>{score}</Text>
+          <Text style={styles.scoreText}>Score</Text>
         </View>
+
+          <Countdown initialCount={30} onEnd={handleGameOver} errorOccurred={errorOccurred} />
+
+        <View style={styles.scoreBlock}>
+          <Text style={styles.numberText}>{bestScore}</Text>
+          <Text style={styles.scoreText}>Best</Text>
+        </View>
+      </View>
         <View style={styles.blocsContainer}>
           {blocs.map((bloc, index) => (
             <View key={index}>
@@ -92,7 +109,7 @@ export default function GameScreen() {
               key={tool.id}
               style={[styles.button, styles[`slot${tool.slot}`]]}
               onPress={() => handlePress(tool.id)}>
-              <Text>{tool.name}</Text>
+                <Image source={tool.image} style={styles.toolImage} />
             </TouchableOpacity>
           ))}
         </View>
@@ -116,13 +133,27 @@ const styles = StyleSheet.create({
   blocsContainer: {
     flexDirection: 'column',
     alignItems: 'center',
-    marginTop: 50,
+    marginTop: 80,
   },
   bloc: {
-    padding: 10,
-    textAlign: 'center',
-    width: 125,
-    height: 125,
+    width: 135,
+    height: 135,
+    backgroundColor: '#e0e0e0', // Utiliser une couleur neutre pour la visibilité de l'ombre
+    borderRadius: 8, // Adoucir légèrement les bords
+    alignItems: 'center',
+    justifyContent: 'center',
+
+    // Ombre
+    shadowColor: '#000',
+    shadowOffset: { width: 5, height: 5 },
+    shadowOpacity: 0.5,
+    shadowRadius: 5,
+    elevation: 10, // Pour Android
+  },
+  blocText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
   },
   buttonsContainer: {
     position: 'absolute',
@@ -134,9 +165,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   button: {
-    backgroundColor: 'rgba(204, 204, 204, 0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     borderWidth: 3,
-    borderColor: 'rgba(204, 204, 204, 0.7)',
+    borderColor: 'rgba(0, 0, 0, 0.5)',
     padding: 10,
     minWidth: 100,
     minHeight: 100,
@@ -158,7 +189,7 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     position: 'absolute',
     left: 10,
-    bottom: 120,
+    bottom: 130,
   },
   slot2: {
     padding: 10,
@@ -167,7 +198,7 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     position: 'absolute',
     right: 10,
-    bottom: 120,
+    bottom: 130,
   },
   slot3: {
     padding: 10,
@@ -191,19 +222,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
+    padding: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)', // Fond semi-transparent
+    marginTop: 0,
+    height: 100, // Hauteur fixe pour tout le container
     width: '100%',
-    marginTop: 20,
   },
+  scoreBlock: {
+    flex: 1,
+    alignItems: 'center', // Centrer les textes à l'intérieur de chaque bloc
+  },
+
   scoreText: {
-    flex: 1,
-    textAlign: 'left',
-    fontSize: 18,
-    marginLeft: 20,
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFF',
+    marginTop: 5,
   },
-  bestScoreText: {
-    flex: 1,
-    textAlign: 'right',
-    fontSize: 18,
-    marginRight: 20,
+  numberText: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: 'rgb(0, 180, 0)',
+  },
+  toolImage: {
+    width: 60,
+    height: 60,
   },
 });
