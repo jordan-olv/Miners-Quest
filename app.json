@@ -2,7 +2,7 @@
   "expo": {
     "name": "miners-quest",
     "slug": "miners-quest",
-    "version": "1.0.0",
+    "version": "1.0.3",
     "scheme": "miners-quest",
     "web": {
       "bundler": "metro",
@@ -29,7 +29,8 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.jordan.olv.minersquest"
+      "bundleIdentifier": "com.jordan.olv.minersquest",
+      "buildNumber": "3"
     },
     "android": {
       "adaptiveIcon": {
