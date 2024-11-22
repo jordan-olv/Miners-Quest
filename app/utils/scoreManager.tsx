@@ -1,36 +1,31 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Clé pour stocker les scores
-const SCORE_KEY = 'user_scores';
+const SCORE_KEY = 'game_scores';
 
-// Fonction pour obtenir le score actuel
-export async function getScores(): Promise<{[key: string]: number} | null> {
-  try {
-    const scoresJson = await AsyncStorage.getItem(SCORE_KEY);
-    return scoresJson != null ? JSON.parse(scoresJson) : {};
-  } catch (e) {
-    console.error('Failed to fetch scores', e);
-    return null; // Retourne null en cas d'erreur
-  }
-}
-
-// Fonction pour sauvegarder le meilleur score
 export async function saveScore(mode: string, newScore: number): Promise<boolean> {
   try {
-    const scores = await getScores();
-    if (!scores) {
-      throw new Error('Unable to retrieve scores');
-    }
+    const scoresJson = await AsyncStorage.getItem(SCORE_KEY);
+    const scores = scoresJson ? JSON.parse(scoresJson) : {};
+
     const bestScore = scores[mode] ?? 0;
     if (newScore > bestScore) {
       scores[mode] = newScore;
-      const scoresJson = JSON.stringify(scores);
-      await AsyncStorage.setItem(SCORE_KEY, scoresJson);
-      return true; // Retourne true pour indiquer le succès
+      await AsyncStorage.setItem(SCORE_KEY, JSON.stringify(scores));
+      return true;
     }
-    return false; // Retourne false si le nouveau score n'est pas un record
-  } catch (e) {
-    console.error('Failed to save score', e);
-    throw e; // Propage l'erreur
+    return false;
+  } catch (error) {
+    console.error('Failed to save score:', error);
+    throw error;
+  }
+}
+
+export async function getScores(): Promise<Record<string, number> | null> {
+  try {
+    const scoresJson = await AsyncStorage.getItem(SCORE_KEY);
+    return scoresJson ? JSON.parse(scoresJson) : null;
+  } catch (error) {
+    console.error('Failed to retrieve scores:', error);
+    return null;
   }
 }

@@ -1,28 +1,28 @@
 const tools = [
   {
     id: 1,
-    name: "Pickaxe",
+    name: 'Pickaxe',
     image: require('../../assets/tools/pickaxe.webp'),
-    slot: 1
+    slot: 1,
   },
   {
     id: 2,
-    name: "Axe",
+    name: 'Axe',
     image: require('../../assets/tools/axe.webp'),
-    slot: 2
+    slot: 2,
   },
   {
     id: 3,
-    name: "Shovel",
+    name: 'Shovel',
     image: require('../../assets/tools/shovel.webp'),
-    slot: 3
+    slot: 3,
   },
   {
     id: 4,
-    name: "Hoe",
+    name: 'Hoe',
     image: require('../../assets/tools/hoe.webp'),
-    slot: 4
-  }
+    slot: 4,
+  },
 ];
 
 export default tools;

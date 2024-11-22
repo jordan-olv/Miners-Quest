@@ -1,13 +1,21 @@
-import React, { useState, useEffect, useRef } from 'react';
 import { Stack } from 'expo-router';
-import { View, Text, TouchableOpacity, StyleSheet, Image, ImageBackground, Animated } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  ImageBackground,
+  Animated,
+} from 'react-native';
 
-import toolsData from '~/app/data/tools';
-import blocsData from '~/app/data/bloc';
-import { Container } from '~/components/Container';
-import { Countdown } from '~/components/Countdown';
 import { saveScore, getScores } from '../utils/scoreManager';
 
+import blocsData from '~/app/data/bloc';
+import toolsData from '~/app/data/tools';
+import { Container } from '~/components/Container';
+import { Countdown } from '~/components/Countdown';
 
 interface Bloc {
   id: number;
@@ -19,10 +27,12 @@ interface Bloc {
 export default function GameScreen() {
   const [score, setScore] = useState(0);
   const [bestScore, setBestScore] = useState(0);
+  const [countdownTimer, setCountdownTimer] = useState(10);
   const [gameOver, setGameOver] = useState(false);
   const [blocs, setBlocs] = useState<Bloc[]>([]);
   const [errorOccurred, setErrorOccurred] = useState(false);
 
+  const shakeAnimation = useRef(new Animated.Value(0)).current;
   const scoreAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -32,6 +42,10 @@ export default function GameScreen() {
       useNativeDriver: true,
     }).start();
   }, [score]);
+
+  useEffect(() => {
+    console.log('Game over state changed:', gameOver);
+  }, [gameOver]);
 
   const generateBlocs = (start: number, count: number) => {
     const newBlocs = [];
@@ -43,19 +57,28 @@ export default function GameScreen() {
   };
 
   useEffect(() => {
-    setBlocs(generateBlocs(0, 10));
+    setBlocs(generateBlocs(0, 100));
   }, []);
 
   const handleGameOver = async () => {
-    setGameOver(true);
-    await saveScore('test', score);
-    const scores = await getScores();
-    if (scores) {
-      const bestScore = scores['test'] || 0;
-      setBestScore(bestScore);
-    } else {
-      setBestScore(0);
+    if (!gameOver) {
+      try {
+        setGameOver(true);
+        await saveScore('test', score);
+        const scores = await getScores();
+        setBestScore(scores ? scores['test'] || 0 : 0);
+      } catch (error) {
+        console.error('Failed to handle game over:', error);
+      }
     }
+  };
+
+  const restartGame = () => {
+    setGameOver(false);
+    setBlocs(generateBlocs(0, 100));
+    setScore(0);
+    setCountdownTimer(10);
+    console.log('Game restarted');
   };
 
   const handlePress = (toolId: number) => {
@@ -63,16 +86,20 @@ export default function GameScreen() {
 
     const topBloc = blocs[0];
 
+    //If not the same tool, shake the bloc
     if (toolId !== topBloc.toolsId) {
       setErrorOccurred(true);
-      setTimeout(() => setErrorOccurred(false), 100);
+      Animated.sequence([
+        Animated.timing(shakeAnimation, { toValue: 10, duration: 50, useNativeDriver: true }),
+        Animated.timing(shakeAnimation, { toValue: -10, duration: 50, useNativeDriver: true }),
+        Animated.timing(shakeAnimation, { toValue: 10, duration: 50, useNativeDriver: true }),
+        Animated.timing(shakeAnimation, { toValue: 0, duration: 50, useNativeDriver: true }),
+      ]).start(() => setErrorOccurred(false));
+
+      return;
     }
 
     setBlocs(blocs.slice(1));
-
-    if (blocs.length < 6) {
-      setBlocs(generateBlocs(0, 6));
-    }
 
     if (toolId === topBloc.toolsId) {
       setScore(score + 1);
@@ -83,23 +110,32 @@ export default function GameScreen() {
     <ImageBackground source={require('../../assets/bg.jpg')} style={styles.backgroundImage}>
       <Stack.Screen options={{ title: 'Game' }} />
       <Container>
-      <View style={styles.scoreContainer}>
-        <View style={styles.scoreBlock}>
-          <Text style={styles.numberText}>{score}</Text>
-          <Text style={styles.scoreText}>Score</Text>
-        </View>
+        <View style={styles.scoreContainer}>
+          <View style={styles.scoreBlock}>
+            <Text style={styles.numberText}>{score}</Text>
+            <Text style={styles.scoreText}>Score</Text>
+          </View>
 
-          <Countdown initialCount={30} onEnd={handleGameOver} errorOccurred={errorOccurred} />
+          <Countdown initialCount={countdownTimer} onEnd={handleGameOver} />
 
-        <View style={styles.scoreBlock}>
-          <Text style={styles.numberText}>{bestScore}</Text>
-          <Text style={styles.scoreText}>Best</Text>
+          <View style={styles.scoreBlock}>
+            <Text style={styles.numberText}>{bestScore}</Text>
+            <Text style={styles.scoreText}>Best</Text>
+          </View>
         </View>
-      </View>
         <View style={styles.blocsContainer}>
           {blocs.map((bloc, index) => (
             <View key={index}>
-              <Image source={bloc.image} style={styles.bloc} />
+              <Animated.View
+                style={[
+                  styles.block,
+                  {
+                    transform: [{ translateX: shakeAnimation }],
+                    borderColor: errorOccurred ? 'red' : 'transparent',
+                  },
+                ]}>
+                <Image source={bloc.image} style={styles.bloc} />
+              </Animated.View>
             </View>
           ))}
         </View>
@@ -109,16 +145,26 @@ export default function GameScreen() {
               key={tool.id}
               style={[styles.button, styles[`slot${tool.slot}`]]}
               onPress={() => handlePress(tool.id)}>
-                <Image source={tool.image} style={styles.toolImage} />
+              <Image source={tool.image} style={styles.toolImage} />
             </TouchableOpacity>
           ))}
         </View>
+
+        {/* make popup for game over and restart */}
+        {gameOver && (
+          <View style={styles.gameOverContainer}>
+            <Text style={styles.gameOverText}>Game Over</Text>
+            <TouchableOpacity style={styles.restartButton} onPress={restartGame}>
+              <Text style={styles.restartText}>Restart</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </Container>
     </ImageBackground>
   );
 }
 
-const styles = StyleSheet.create({
+const styles: { [key: string]: any } = StyleSheet.create({
   container: {
     display: 'flex',
     alignItems: 'center',
@@ -247,5 +293,32 @@ const styles = StyleSheet.create({
   toolImage: {
     width: 60,
     height: 60,
+  },
+  gameOverContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  gameOverText: {
+    fontSize: 40,
+    fontWeight: 'bold',
+    color: '#FFF',
+  },
+  restartButton: {
+    backgroundColor: 'rgb(0, 180, 0)',
+    padding: 10,
+    borderRadius: 10,
+    marginTop: 20,
+  },
+  restartText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFF',
   },
 });
